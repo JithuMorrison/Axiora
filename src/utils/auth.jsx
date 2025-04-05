@@ -1,4 +1,4 @@
-import { getUserByEmail } from './excelHandler';
+import { getUserByEmail, addUser } from './excel';
 
 export const authenticateUser = (email, password) => {
   const user = getUserByEmail(email);
@@ -10,4 +10,12 @@ export const authenticateUser = (email, password) => {
 
 export const isEmailRegistered = (email) => {
   return !!getUserByEmail(email);
+};
+
+export const registerUser = (userData) => {
+  if (isEmailRegistered(userData.email)) {
+    throw new Error('Email already registered');
+  }
+  addUser(userData);
+  return true;
 };

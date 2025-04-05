@@ -10,6 +10,8 @@ import MOUList from './components/MOU/list';
 import MOUDownload from './components/MOU/download';
 import Notifications from './components/notification';
 import Navbar from './components/navbar';
+import { differenceInMonths, parseISO, format } from 'date-fns';
+import { getAllMOU } from './utils/excel';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -67,27 +69,61 @@ const Home = () => (
   </div>
 );
 
-const Dashboard = ({ children }) => (
-  <div className="dashboard">
-    {children}
-    <div className="dashboard-cards">
-      <div className="card">
-        <h3>Add New MOU</h3>
-        <p>Enter details of new Memorandum of Understanding</p>
-        <a href="/add-mou" className="card-link">Go to Form</a>
+const Dashboard = ({ children }) => {
+  const [mou,setMOU] = useState([]);
+  useEffect(() => {
+    const allMOU = getAllMOU();
+    const currentDate = new Date();
+
+    const expiringMOU = [];
+
+    allMOU.forEach(mou => {
+      const endDate = parseISO(mou.endDate);
+      const monthsRemaining = differenceInMonths(endDate, currentDate);
+
+      if (monthsRemaining <= 1) {
+        expiringMOU.push(mou);
+      }
+    });
+    setMOU(expiringMOU);
+  }, []);
+
+  return (
+    <div className="dashboard">
+      {children}
+      <div className="dashboard-cards">
+        <div className="card">
+          <h3>Add New MOU</h3>
+          <p>Enter details of new Memorandum of Understanding</p>
+          <a href="/add-mou" className="card-link">Go to Form</a>
+        </div>
+        <div className="card">
+          <h3>View MOU Records</h3>
+          <p>Browse and search existing MOU records</p>
+          <a href="/view-mou" className="card-link">View Records</a>
+        </div>
+        <div className="card">
+          <h3>Download Data</h3>
+          <p>Export MOU data to Excel with filters</p>
+          <a href="/download-mou" className="card-link">Download</a>
+        </div>
       </div>
-      <div className="card">
-        <h3>View MOU Records</h3>
-        <p>Browse and search existing MOU records</p>
-        <a href="/view-mou" className="card-link">View Records</a>
-      </div>
-      <div className="card">
-        <h3>Download Data</h3>
-        <p>Export MOU data to Excel with filters</p>
-        <a href="/download-mou" className="card-link">Download</a>
+      <div>
+        <h2>Expiring MOUs</h2>
+        {mou.length === 0 ? (
+          <p>No MOUs expiring within a month.</p>
+        ) : (
+          <ul>
+            {mou.map((item, index) => (
+              <li key={index}>
+                <strong>{item.instituteName}</strong> – Expires on {format(parseISO(item.endDate), 'MMM d, yyyy')}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default App;

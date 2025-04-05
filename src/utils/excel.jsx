@@ -1,33 +1,41 @@
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
-const DATA_DIR = './data';
+// Browser-compatible Excel file handling
+let usersData = [];
+let mouData = [];
 
-// Initialize data directory
-if (!window.fs) {
-  window.fs = require('fs');
-  if (!window.fs.existsSync(DATA_DIR)) {
-    window.fs.mkdirSync(DATA_DIR);
+// Initialize with sample data if localStorage is empty
+const initializeData = () => {
+  if (typeof window !== 'undefined') {
+    const storedUsers = localStorage.getItem('mouTrackerUsers');
+    const storedMOU = localStorage.getItem('mouTrackerMOU');
+    
+    usersData = storedUsers ? JSON.parse(storedUsers) : [];
+    mouData = storedMOU ? JSON.parse(storedMOU) : [];
   }
-}
-
-const getUsersFile = () => `${DATA_DIR}/users.xlsx`;
-const getMOUFile = () => `${DATA_DIR}/mou_data.xlsx`;
-
-export const readExcel = (filePath) => {
-  if (window.fs.existsSync(filePath)) {
-    const buffer = window.fs.readFileSync(filePath);
-    return XLSX.read(buffer, { type: 'buffer' });
-  }
-  return null;
 };
 
-export const writeExcel = (filePath, data, sheetName = 'Sheet1') => {
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(data);
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
-  window.fs.writeFileSync(filePath, buffer);
+initializeData();
+
+// Simulate file operations using localStorage
+export const readExcel = (fileType) => {
+  if (fileType === 'users') {
+    return usersData;
+  } else if (fileType === 'mou') {
+    return mouData;
+  }
+  return [];
+};
+
+export const writeExcel = (fileType, data) => {
+  if (fileType === 'users') {
+    usersData = data;
+    localStorage.setItem('mouTrackerUsers', JSON.stringify(data));
+  } else if (fileType === 'mou') {
+    mouData = data;
+    localStorage.setItem('mouTrackerMOU', JSON.stringify(data));
+  }
 };
 
 export const exportToExcel = (data, fileName) => {
@@ -35,17 +43,15 @@ export const exportToExcel = (data, fileName) => {
   const ws = XLSX.utils.json_to_sheet(data);
   XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
   const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const blob = new Blob([excelBuffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  });
   saveAs(blob, `${fileName}.xlsx`);
 };
 
+// User-related functions
 export const getAllUsers = () => {
-  const wb = readExcel(getUsersFile());
-  if (wb) {
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    return XLSX.utils.sheet_to_json(ws);
-  }
-  return [];
+  return readExcel('users');
 };
 
 export const getUserByEmail = (email) => {
@@ -56,22 +62,18 @@ export const getUserByEmail = (email) => {
 export const addUser = (user) => {
   const users = getAllUsers();
   users.push(user);
-  writeExcel(getUsersFile(), users, 'Users');
+  writeExcel('users', users);
 };
 
+// MOU-related functions
 export const getAllMOU = () => {
-  const wb = readExcel(getMOUFile());
-  if (wb) {
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    return XLSX.utils.sheet_to_json(ws);
-  }
-  return [];
+  return readExcel('mou');
 };
 
 export const addMOU = (mou) => {
   const allMOU = getAllMOU();
   allMOU.push(mou);
-  writeExcel(getMOUFile(), allMOU, 'MOU Data');
+  writeExcel('mou', allMOU);
 };
 
 export const filterMOU = (filters) => {
@@ -82,4 +84,30 @@ export const filterMOU = (filters) => {
       return String(mou[key]).toLowerCase().includes(String(value).toLowerCase());
     });
   });
+};
+
+// Initialize with sample data if empty (optional)
+export const initializeSampleData = () => {
+  if (getAllUsers().length === 0) {
+    writeExcel('users', [
+      { name: 'Admin', email: 'admin@example.com', password: 'admin123' }
+    ]);
+  }
+  
+  if (getAllMOU().length === 0) {
+    writeExcel('mou', [
+      {
+        instituteName: 'Sample University',
+        startDate: '2023-01-01',
+        endDate: '2025-12-31',
+        signedBy: 'Dr. Smith',
+        facultyDetails: 'Computer Science Department',
+        academicYear: '2023-2025',
+        purpose: 'Academic collaboration',
+        outcomes: 'Student exchange program',
+        createdBy: 'admin@example.com',
+        createdAt: new Date().toISOString()
+      }
+    ]);
+  }
 };
