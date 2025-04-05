@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { filterMOU, exportToExcel } from '../../utils/excelHandler';
+import { filterMOU, exportToExcel } from '../../utils/excel';
 import { toast } from 'react-toastify';
 
 const MOUDownload = () => {

@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 import { differenceInMonths, parseISO, format } from 'date-fns';
-import { getAllMOU } from './excelHandler';
+import { getAllMOU } from './excel';
 
 export const checkMOURenewals = () => {
   const allMOU = getAllMOU();

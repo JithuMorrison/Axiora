@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { addMOU } from '../../utils/excelHandler';
-import { showNewMOUNotification } from '../../utils/notifications';
+import { showNewMOUNotification } from '../../utils/notification';
 import { toast } from 'react-toastify';
 
 const MOUForm = ({ user }) => {

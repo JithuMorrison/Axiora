@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllMOU } from '../../utils/excelHandler';
+import { getAllMOU } from '../../utils/excel';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 

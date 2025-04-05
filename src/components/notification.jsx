@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { checkMOURenewals } from '../utils/notifications';
+import { checkMOURenewals } from '../utils/notification';
 
 const Notifications = () => {
   useEffect(() => {
