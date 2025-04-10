@@ -35,7 +35,11 @@ const Login = ({ setUser }) => {
         Back
       </button>
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-blue-200">
-        <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">Welcome Back 👋</h2>
+      <h2 className="text-3xl font-bold text-center mb-6">
+        <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+          Welcome Back
+        </span> 👋
+      </h2>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">Email address</label>
@@ -61,7 +65,7 @@ const Login = ({ setUser }) => {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-semibold transition-all"
+            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-indigo-600 hover:to-violet-600 text-white py-2.5 rounded-lg font-semibold transition-all duration-300"
           >
             Sign In
           </button>
