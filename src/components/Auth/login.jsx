@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authenticateUser } from '../../utils/auth';
 import { toast } from 'react-toastify';
+import { FaArrowLeft } from 'react-icons/fa';
 
 const Login = ({ setUser }) => {
   const [email, setEmail] = useState('');
@@ -20,9 +21,19 @@ const Login = ({ setUser }) => {
     }
   };
 
+  const handleback = () => {
+    navigate('/');
+  } 
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center px-4">
-      <button className='absolute top-20 right-10'>Back</button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center px-4 -mx-35 -my-3">
+      <button
+        className="absolute top-20 right-10 flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-white/20"
+        onClick={handleback}
+      >
+        <FaArrowLeft className="text-white" />
+        Back
+      </button>
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-blue-200">
         <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">Welcome Back 👋</h2>
         <form onSubmit={handleSubmit} className="space-y-5">
