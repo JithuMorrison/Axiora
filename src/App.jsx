@@ -414,127 +414,103 @@ const Dashboard = ({ children, theme }) => {
   );
 };
 
-const Footer = ({ theme }) => {
-  const isDark = theme === "dark";
-
+const Footer = () => {
   return (
-    <footer
-      className={`py-16 px-6 md:px-12 transition-colors duration-300 ${
-        isDark ? "bg-gray-900 text-gray-300" : "bg-gray-100 text-gray-800"
-      }`}
-    >
+    <footer className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white pt-16 px-6 md:px-12">
       <div className="max-w-7xl mx-auto">
-        {/* Grid Content */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-10 border-b pb-12 mb-10 border-gray-700/30">
-          {/* Brand */}
+        {/* Top Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-10 border-b border-white/20 pb-12 mb-10">
+          {/* Brand + Description */}
           <div className="md:col-span-2 space-y-4">
-            <h3
-              className={`text-2xl font-bold tracking-tight ${
-                isDark ? "text-white" : "text-gray-900"
-              }`}
-            >
+            <h3 className="text-3xl font-extrabold tracking-tight text-white">
               MOUTracker
             </h3>
-            <p className="text-sm opacity-80">
-              The modern way to manage your MOUs, partners, and institutional
-              collaborations. Built for reliability and ease.
+            <p className="text-sm text-white/80 leading-relaxed">
+              A vibrant, secure, and seamless solution to manage your MOUs,
+              institutional collaborations, and partnerships with ease.
             </p>
-            <div className="flex space-x-4 mt-4">
+            <div className="flex space-x-4 mt-4 text-xl">
               <a
                 href="#"
-                className="hover:text-blue-500 transition-colors text-lg"
+                aria-label="Facebook"
+                className="hover:text-blue-300 transition"
               >
                 <FaFacebookF />
               </a>
               <a
                 href="#"
-                className="hover:text-sky-400 transition-colors text-lg"
+                aria-label="Twitter"
+                className="hover:text-sky-300 transition"
               >
                 <FaTwitter />
               </a>
               <a
                 href="#"
-                className="hover:text-blue-700 transition-colors text-lg"
+                aria-label="LinkedIn"
+                className="hover:text-blue-200 transition"
               >
                 <FaLinkedinIn />
               </a>
               <a
                 href="#"
-                className="hover:text-gray-600 transition-colors text-lg"
+                aria-label="GitHub"
+                className="hover:text-gray-200 transition"
               >
                 <FaGithub />
               </a>
             </div>
           </div>
 
-          {/* Links */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Product</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="/features" className="hover:underline">
-                  Features
-                </a>
-              </li>
-              <li>
-                <a href="/pricing" className="hover:underline">
-                  Pricing
-                </a>
-              </li>
-              <li>
-                <a href="/updates" className="hover:underline">
-                  Updates
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Company</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="/about" className="hover:underline">
-                  About Us
-                </a>
-              </li>
-              <li>
-                <a href="/contact" className="hover:underline">
-                  Contact
-                </a>
-              </li>
-              <li>
-                <a href="/careers" className="hover:underline">
-                  Careers
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Resources</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="/help" className="hover:underline">
-                  Help Center
-                </a>
-              </li>
-              <li>
-                <a href="/docs" className="hover:underline">
-                  Documentation
-                </a>
-              </li>
-              <li>
-                <a href="/api" className="hover:underline">
-                  API
-                </a>
-              </li>
-            </ul>
-          </div>
+          {/* Footer Links */}
+          {[
+            {
+              title: "Product",
+              links: [
+                { name: "Features", href: "/features" },
+                { name: "Pricing", href: "/pricing" },
+                { name: "Updates", href: "/updates" },
+              ],
+            },
+            {
+              title: "Company",
+              links: [
+                { name: "About Us", href: "/about" },
+                { name: "Contact", href: "/contact" },
+                { name: "Careers", href: "/careers" },
+              ],
+            },
+            {
+              title: "Resources",
+              links: [
+                { name: "Help Center", href: "/help" },
+                { name: "Documentation", href: "/docs" },
+                { name: "API Access", href: "/api" },
+              ],
+            },
+          ].map((section, idx) => (
+            <div key={idx} className="space-y-4">
+              <h4 className="text-lg font-semibold text-white">
+                {section.title}
+              </h4>
+              <ul className="space-y-2 text-sm">
+                {section.links.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      className="text-white/90 hover:text-white underline-offset-2 hover:underline transition"
+                    >
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-          <p className="opacity-70">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/80 pb-10">
+          <p>
             © {new Date().getFullYear()} MOUTracker. All rights reserved.
           </p>
           <div className="flex space-x-6">
