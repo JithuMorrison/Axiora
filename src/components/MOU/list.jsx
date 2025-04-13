@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { getAllMOU } from '../../utils/excel';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
-import { FiSearch, FiRefreshCw, FiCalendar, FiUser, FiBook, FiFileText, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiSearch, FiRefreshCw, FiCalendar, FiUser, FiBook, FiFileText, FiChevronLeft, FiChevronRight, FiDownload } from 'react-icons/fi';
 
 const MOUList = () => {
-  const [mouList, setMouList] = useState([]);
+  const [sheetData, setSheetData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -13,17 +13,33 @@ const MOUList = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
   useEffect(() => {
-    loadMOUData();
+    fetchData();
   }, []);
 
-  const loadMOUData = () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const allMOU = getAllMOU();
-      setMouList(allMOU);
+      const res = await axios.get('http://localhost:5000/sheet-data1');
+      // Transform the array of arrays into array of objects
+      const transformedData = res.data.values.map(row => ({
+        instituteName: row[0] || '',
+        startDate: row[1] || '',
+        endDate: row[2] || '',
+        signedBy: row[3] || '',
+        facultyDetails: row[4] || '',
+        academicYear: row[5] || '',
+        purpose: row[6] || '',
+        outcomes: row[7] || '',
+        agreementFileId: row[8] || '',
+        fileName: row[9] || '',
+        createdBy: row[10] || '',
+        createdAt: row[11] || ''
+      }));
+      setSheetData(transformedData);
       setLoading(false);
     } catch (error) {
       toast.error('Error loading MOU data');
+      console.error('Error fetching data:', error);
       setLoading(false);
     }
   };
@@ -37,7 +53,7 @@ const MOUList = () => {
   };
 
   const sortedData = React.useMemo(() => {
-    let sortableData = [...mouList];
+    let sortableData = [...sheetData];
     if (sortConfig.key) {
       sortableData.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {
@@ -50,7 +66,7 @@ const MOUList = () => {
       });
     }
     return sortableData;
-  }, [mouList, sortConfig]);
+  }, [sheetData, sortConfig]);
 
   const filteredData = sortedData.filter(mou =>
     Object.values(mou).some(
@@ -67,6 +83,25 @@ const MOUList = () => {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const downloadFile = async (fileId, fileName) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/get-pdf/${fileName}`, {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error(err);
+      alert('❌ Download failed');
+    }
+  };
 
   if (loading) {
     return (
@@ -99,13 +134,13 @@ const MOUList = () => {
             </div>
           </div>
 
-          {mouList.length === 0 ? (
+          {sheetData.length === 0 ? (
             <div className="text-center py-12">
               <FiFileText className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-lg font-medium text-gray-900">No MOU records found</h3>
               <p className="mt-1 text-sm text-gray-500">Add a new MOU to get started</p>
               <button
-                onClick={loadMOUData}
+                onClick={fetchData}
                 className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <FiRefreshCw className="mr-2 h-4 w-4" />
@@ -165,21 +200,15 @@ const MOUList = () => {
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('academicYear')}
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        Academic Year
-                        {sortConfig.key === 'academicYear' && (
-                          <span className="ml-1">
-                            {sortConfig.direction === 'ascending' ? '↑' : '↓'}
-                          </span>
-                        )}
+                        Agreement
                       </th>
                       <th
                         scope="col"
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        Purpose
+                        Created By
                       </th>
                     </tr>
                   </thead>
@@ -193,34 +222,48 @@ const MOUList = () => {
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">{mou.instituteName}</div>
-                              <div className="text-sm text-gray-500">{mou.createdBy}</div>
+                              <div className="text-sm text-gray-500">{mou.academicYear}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {format(new Date(mou.startDate), 'MMM yyyy')} -{' '}
-                            {format(new Date(mou.endDate), 'MMM yyyy')}
+                            {mou.startDate && format(new Date(mou.startDate), 'MMM dd, yyyy')} -{' '}
+                            {mou.endDate && format(new Date(mou.endDate), 'MMM dd, yyyy')}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {Math.ceil(
-                              (new Date(mou.endDate) - new Date(mou.startDate)) /
-                                (1000 * 60 * 60 * 24 * 30)
-                            )}{' '}
-                            months
+                            {mou.startDate && mou.endDate && (
+                              <>
+                                {Math.ceil(
+                                  (new Date(mou.endDate) - new Date(mou.startDate)) /
+                                    (1000 * 60 * 60 * 24)
+                                )}{' '}
+                                days
+                              </>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{mou.signedBy}</div>
+                          <div className="text-sm text-gray-500">{mou.facultyDetails}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            {mou.academicYear}
-                          </span>
+                          {mou.agreementFileId ? (
+                            <button
+                              onClick={() => downloadFile(mou.agreementFileId, mou.fileName)}
+                              className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-green-600 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            >
+                              <FiDownload className="mr-1" />
+                              Download
+                            </button>
+                          ) : (
+                            <span className="text-sm text-gray-500">No file</span>
+                          )}
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
-                            {mou.purpose.substring(0, 60)}...
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{mou.createdBy}</div>
+                          <div className="text-sm text-gray-500">
+                            {mou.createdAt && format(new Date(mou.createdAt), 'MMM dd, yyyy HH:mm')}
                           </div>
                         </td>
                       </tr>
