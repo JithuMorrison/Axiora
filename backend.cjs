@@ -17,6 +17,7 @@ const upload = multer({ dest: 'uploads/' });
 
 // 📄 ENV variables
 const SHEET_ID = process.env.SHEET_ID;
+const SHEET_ID1 = process.env.SHEET_ID1;
 const SHEET_NAME = process.env.SHEET_NAME;
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID; // Add this to your .env
 
@@ -57,6 +58,33 @@ app.post('/append', async (req, res) => {
 
   res.send('Data appended successfully');
 });
+
+app.get('/sheet-data1', async (req, res) => {
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+  
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID1,
+      range: `${SHEET_NAME}!A1:Z1000`,
+    });
+  
+    res.json(response.data);
+  });
+  
+  app.post('/append1', async (req, res) => {
+    const { values } = req.body;
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+  
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID1,
+      range: `${SHEET_NAME}!A1`,
+      valueInputOption: 'USER_ENTERED',
+      resource: { values: [values] },
+    });
+  
+    res.send('Data appended successfully');
+  });
 
 // 📤 Upload PDF to Google Drive
 app.post('/upload-pdf', upload.single('file'), async (req, res) => {
