@@ -12,6 +12,7 @@ import Navbar from './components/navbar';
 import { differenceInMonths, parseISO, format } from 'date-fns';
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaGithub } from 'react-icons/fa';
 import { getAllMOU } from './utils/excel';
+import SheetForm from './sheets';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -218,6 +219,7 @@ const Home = ({ user, theme }) => (
         </div>
       </div>
     </div>
+    <SheetForm/>
   </div>
 );
 
