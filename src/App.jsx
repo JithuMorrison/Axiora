@@ -21,14 +21,14 @@ const App = () => {
   const [theme, setTheme] = useState('light');
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('mouTrackerUser');
+    const storedUser = localStorage.getItem('mouser');
     const storedTheme = localStorage.getItem('mouTrackerTheme');
     if (storedUser) setUser(JSON.parse(storedUser));
     if (storedTheme) setTheme(storedTheme);
   }, []);
 
   useEffect(() => {
-    if (user) localStorage.setItem('mouTrackerUser', JSON.stringify(user));
+    if (user) localStorage.setItem('mouser', JSON.stringify(user));
     localStorage.setItem('mouTrackerTheme', theme);
     document.documentElement.className = theme;
   }, [user, theme]);

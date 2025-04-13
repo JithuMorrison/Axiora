@@ -8,6 +8,7 @@ const Navbar = ({ user, setUser }) => {
 
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem('mouser');
     navigate("/");
   };
 
