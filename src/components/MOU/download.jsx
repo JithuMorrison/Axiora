@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { filterMOU, exportToExcel } from '../../utils/excel';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { toast } from 'react-toastify';
 import { FiDownload, FiFilter, FiCalendar, FiUser, FiBook, FiClock, FiX, FiCheck } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
 
 const MOUDownload = () => {
   const [filters, setFilters] = useState({
@@ -12,16 +13,86 @@ const MOUDownload = () => {
   });
   const [isDownloading, setIsDownloading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [allMOU, setAllMOU] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/sheet-data1');
+        // Transform the array of arrays into array of objects
+        const transformedData = response.data.values.map(row => ({
+          instituteName: row[0] || '',
+          startDate: row[1] || '',
+          endDate: row[2] || '',
+          signedBy: row[3] || '',
+          facultyDetails: row[4] || '',
+          academicYear: row[5] || '',
+          purpose: row[6] || '',
+          outcomes: row[7] || '',
+          agreementFileId: row[8] || '',
+          fileName: row[9] || '',
+          createdBy: row[10] || '',
+          createdAt: row[11] || ''
+        }));
+        setAllMOU(transformedData);
+      } catch (error) {
+        toast.error('Failed to load MOU data');
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
+  const filterMOU = () => {
+    return allMOU.filter(mou => {
+      return (
+        (filters.academicYear === '' || 
+         mou.academicYear.toLowerCase().includes(filters.academicYear.toLowerCase())) &&
+        (filters.instituteName === '' || 
+         mou.instituteName.toLowerCase().includes(filters.instituteName.toLowerCase())) &&
+        (filters.facultyName === '' || 
+         mou.signedBy.toLowerCase().includes(filters.facultyName.toLowerCase())) &&
+        (filters.duration === '' || 
+         mou.startDate.includes(filters.duration) || 
+         mou.endDate.includes(filters.duration))
+      );
+    });
+  };
+
+  const exportToExcel = (data, fileName) => {
+    // Prepare data for Excel export
+    const excelData = data.map(mou => ({
+      'Institute Name': mou.instituteName,
+      'Start Date': mou.startDate,
+      'End Date': mou.endDate,
+      'Signed By': mou.signedBy,
+      'Faculty Details': mou.facultyDetails,
+      'Academic Year': mou.academicYear,
+      'Purpose': mou.purpose,
+      'Outcomes': mou.outcomes,
+      'Created By': mou.createdBy,
+      'Created At': mou.createdAt
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'MOU Data');
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+  };
+
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const filteredData = filterMOU(filters);
+      const filteredData = filterMOU();
       if (filteredData.length === 0) {
         toast.warning('No records match your filters');
         return;
@@ -55,6 +126,16 @@ const MOUDownload = () => {
     toast.info('Filters reset');
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-6">
       <div className="bg-gradient-to-br from-white to-violet-50 rounded-2xl shadow-2xl overflow-hidden border border-violet-100">
@@ -80,7 +161,7 @@ const MOUDownload = () => {
                     Processing
                   </>
                 ) : (
-                  'Ready to Export'
+                  `Loaded ${allMOU.length} records`
                 )}
               </span>
             </div>
@@ -153,11 +234,11 @@ const MOUDownload = () => {
             </button>
             <button
               onClick={handleDownload}
-              disabled={isDownloading}
+              disabled={isDownloading || loading}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
               className={`px-5 py-3 rounded-xl text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-700 transition-all duration-300 flex items-center justify-center ${
-                isDownloading
+                isDownloading || loading
                   ? 'bg-violet-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-violet-600 to-purple-500 hover:from-violet-700 hover:to-purple-600 shadow-lg hover:shadow-violet-300/50'
               }`}
