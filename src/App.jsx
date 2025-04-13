@@ -14,6 +14,7 @@ import { FaFacebookF, FaTwitter, FaLinkedinIn, FaGithub } from 'react-icons/fa';
 import { getAllMOU } from './utils/excel';
 import SheetForm from './sheets';
 import PdfManager from './drive';
+import axios from 'axios';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -232,12 +233,29 @@ const Dashboard = ({ children, theme }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const allMOU = await getAllMOU();
+        const response = await axios.get('http://localhost:5000/sheet-data1');
+        const allMOU = response.data.values.map(row => ({
+          instituteName: row[0] || '',
+          startDate: row[1] || '',
+          endDate: row[2] || '',
+          signedBy: row[3] || '',
+          facultyDetails: row[4] || '',
+          academicYear: row[5] || '',
+          purpose: row[6] || '',
+          outcomes: row[7] || '',
+          agreementFileId: row[8] || '',
+          fileName: row[9] || '',
+          createdBy: row[10] || '',
+          createdAt: row[11] || ''
+        }));
+
         const currentDate = new Date();
         const expiringMOU = allMOU.filter(mou => {
+          if (!mou.endDate) return false;
           const endDate = parseISO(mou.endDate);
           return differenceInMonths(endDate, currentDate) <= 1;
         });
+        
         setMOU(expiringMOU);
       } catch (error) {
         console.error("Error loading MOU data:", error);
@@ -253,62 +271,60 @@ const Dashboard = ({ children, theme }) => {
     <div className="space-y-8">
       {children}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition-shadow border-l-4 border-blue-500">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="bg-blue-100 p-3 rounded-full">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+        <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition-shadow border-l-4 border-blue-500">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="bg-blue-100 p-3 rounded-full">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-800">Add New MOU</h3>
           </div>
-          <h3 className="text-lg font-bold text-gray-800">Add New MOU</h3>
+          <p className="text-gray-600 mb-4">Enter details of new Memorandum of Understanding</p>
+          <a href="/add-mou" className="inline-flex items-center text-blue-600 font-medium hover:text-blue-800 transition">
+            Go to Form
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
         </div>
-        <p className="text-gray-600 mb-4">Enter details of new Memorandum of Understanding</p>
-        <a href="/add-mou" className="inline-flex items-center text-blue-600 font-medium hover:text-blue-800 transition">
-          Go to Form
-          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </a>
-      </div>
 
-      {/* View MOU */}
-      <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition-shadow border-l-4 border-green-500">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="bg-green-100 p-3 rounded-full">
-            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+        <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition-shadow border-l-4 border-green-500">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="bg-green-100 p-3 rounded-full">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-800">View MOU Records</h3>
           </div>
-          <h3 className="text-lg font-bold text-gray-800">View MOU Records</h3>
+          <p className="text-gray-600 mb-4">Browse and search existing MOU records</p>
+          <a href="/view-mou" className="inline-flex items-center text-green-600 font-medium hover:text-green-800 transition">
+            View Records
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
         </div>
-        <p className="text-gray-600 mb-4">Browse and search existing MOU records</p>
-        <a href="/view-mou" className="inline-flex items-center text-green-600 font-medium hover:text-green-800 transition">
-          View Records
-          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </a>
-      </div>
 
-      {/* Download */}
-      <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition-shadow border-l-4 border-purple-500">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="bg-purple-100 p-3 rounded-full">
-            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
+        <div className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition-shadow border-l-4 border-purple-500">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="bg-purple-100 p-3 rounded-full">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-800">Download Data</h3>
           </div>
-          <h3 className="text-lg font-bold text-gray-800">Download Data</h3>
+          <p className="text-gray-600 mb-4">Export MOU data to Excel with filters</p>
+          <a href="/download-mou" className="inline-flex items-center text-purple-600 font-medium hover:text-purple-800 transition">
+            Download
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
         </div>
-        <p className="text-gray-600 mb-4">Export MOU data to Excel with filters</p>
-        <a href="/download-mou" className="inline-flex items-center text-purple-600 font-medium hover:text-purple-800 transition">
-          Download
-          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </a>
       </div>
-    </div>
       
       <div className={`p-6 rounded-xl transition-all duration-300 ${
         theme === 'dark' 
@@ -363,7 +379,7 @@ const Dashboard = ({ children, theme }) => {
               theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
             } rounded-lg p-4 mb-2 font-medium`}>
               <div className="col-span-5">Institution</div>
-              <div className="col-span-3">Agreement Type</div>
+              <div className="col-span-3">Signed By</div>
               <div className="col-span-2">End Date</div>
               <div className="col-span-2">Status</div>
             </div>
@@ -392,7 +408,7 @@ const Dashboard = ({ children, theme }) => {
                   <div className={`col-span-3 ${
                     theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
                   }`}>
-                    {item.agreementType || 'General'}
+                    {item.signedBy}
                   </div>
                   <div className={`col-span-2 ${
                     theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
