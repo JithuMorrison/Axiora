@@ -13,6 +13,7 @@ import { differenceInMonths, parseISO, format } from 'date-fns';
 import { FaFacebookF, FaTwitter, FaLinkedinIn, FaGithub } from 'react-icons/fa';
 import { getAllMOU } from './utils/excel';
 import SheetForm from './sheets';
+import PdfManager from './drive';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -220,6 +221,7 @@ const Home = ({ user, theme }) => (
       </div>
     </div>
     <SheetForm/>
+    <PdfManager/>
   </div>
 );
 
