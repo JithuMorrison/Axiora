@@ -4,8 +4,6 @@ import { checkMOURenewals } from '../utils/notification';
 
 const Notifications = () => {
   useEffect(() => {
-    // Check for renewals when component mounts
-    checkMOURenewals();
     
     // Set up interval to check daily
     const interval = setInterval(() => {
