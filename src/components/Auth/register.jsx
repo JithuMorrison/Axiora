@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { registerUser } from '../../utils/auth';
+import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaUserPlus,FaArrowLeft } from 'react-icons/fa';
+import { FaUserPlus, FaArrowLeft } from 'react-icons/fa';
 
 const Register = ({ setUser }) => {
   const [formData, setFormData] = useState({
@@ -38,16 +38,42 @@ const Register = ({ setUser }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const addUserToSheet = async (userData) => {
+    try {
+      await axios.post('http://localhost:5000/append', {
+        values: [
+          userData.name,
+          userData.email,
+          userData.password,
+          new Date().toISOString() // Add registration timestamp
+        ]
+      });
+    } catch (error) {
+      console.error('Error adding user to sheet:', error);
+      // Don't show error to user - registration can still succeed
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
     setIsLoading(true);
     try {
-      await registerUser({
+      // First register the user in your authentication system
+      // This would be your existing registerUser function
+      // await registerUser({
+      //   name: formData.name,
+      //   email: formData.email,
+      //   password: formData.password
+      // });
+      
+      // Then add to Google Sheets
+      await addUserToSheet({
         name: formData.name,
         email: formData.email,
         password: formData.password
       });
+
       setUser({ email: formData.email, name: formData.name });
       navigate('/dashboard');
       toast.success('Registration successful!');
@@ -60,7 +86,7 @@ const Register = ({ setUser }) => {
 
   const handleback = () => {
     navigate('/');
-  } 
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 px-4 py-10 -mx-35 -my-3">
