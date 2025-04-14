@@ -221,8 +221,6 @@ const Home = ({ user, theme }) => (
         </div>
       </div>
     </div>
-    <SheetForm/>
-    <PdfManager/>
   </div>
 );
 
