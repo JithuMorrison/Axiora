@@ -28,7 +28,7 @@ const Navbar = ({ user, setUser }) => {
         <div className="hidden md:flex space-x-6 items-center font-medium text-sm">
           {user ? (
             <>
-              <Link to="/dashboard" className="hover:text-blue-600 transition">
+              <Link to={user.role == 'user' ? "/dashboard" : "/admindash"} className="hover:text-blue-600 transition">
                 Dashboard
               </Link>
               <Link to="/add-mou" className="hover:text-blue-600 transition">
@@ -85,7 +85,7 @@ const Navbar = ({ user, setUser }) => {
         <div className="md:hidden bg-white dark:bg-gray-900 px-6 pb-4 space-y-3 text-sm font-medium transition-all">
           {user ? (
             <>
-              <Link to="/dashboard" onClick={toggleMobileMenu} className="block hover:text-blue-600">
+              <Link to={user.role == 'user' ? "/dashboard" : "/admindash"} onClick={toggleMobileMenu} className="block hover:text-blue-600">
                 Dashboard
               </Link>
               <Link to="/add-mou" onClick={toggleMobileMenu} className="block hover:text-blue-600">

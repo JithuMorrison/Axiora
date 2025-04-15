@@ -21,7 +21,8 @@ const Login = ({ setUser }) => {
           name: row[0] || '',
           email: row[1] || '',
           password: row[2] || '',
-          createdAt: row[3] || ''
+          createdAt: row[3] || '',
+          role: row[4] || '',
         }));
         setUsers(userData);
       } catch (error) {
@@ -56,7 +57,7 @@ const Login = ({ setUser }) => {
       const userInfo = {
         name: user.name,
         email: user.email,
-        // Don't store password in local storage
+        role: user.role,
         createdAt: user.createdAt
       };
       
@@ -67,7 +68,12 @@ const Login = ({ setUser }) => {
       setUser(userInfo);
       
       // Navigate to dashboard
-      navigate('/dashboard');
+      if(user.role == 'user'){
+        navigate('/dashboard');
+      }
+      else{
+        navigate('/admindash');
+      }
       toast.success('Login successful!');
       
     } catch (error) {
