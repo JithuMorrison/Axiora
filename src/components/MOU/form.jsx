@@ -22,25 +22,60 @@ const MOUForm = ({ user }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value, files } = e.target;
-    
+  
     if (name === 'agreementFile' && files && files[0]) {
-      setFilePreview(files[0].name);
-      // Set default file name if not already set
-      if (!formData.fileName) {
-        const defaultName = `MOU_${formData.instituteName || 'agreement'}_${new Date().toISOString().split('T')[0]}`;
-        setFormData(prev => ({
-          ...prev,
-          fileName: defaultName
-        }));
+      const file = files[0];
+  
+      // Create FormData to send to the Flask server
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', file);
+  
+      try {
+        const response = await axios.post('http://localhost:5001/upload', formDataToSend);
+  
+        const { success, filename } = response.data;
+  
+        if (success) {
+          // Show preview and update filename if not set
+          setFilePreview(file.name);
+  
+          if (!formData.fileName) {
+            setFormData(prev => ({
+              ...prev,
+              fileName: filename
+            }));
+          }
+  
+          setFormData(prev => ({
+            ...prev,
+            [name]: file
+          }));
+  
+          toast.success("Document verified successfully!");
+        } else {
+          // Reset the file input
+          e.target.value = null;
+          setFilePreview('');
+          setFormData(prev => ({
+            ...prev,
+            [name]: null
+          }));
+  
+          toast.error("Document verification failed. Please upload a valid document.");
+        }
+      } catch (err) {
+        console.error('Error verifying file:', err);
+        toast.error("An error occurred while verifying the file.");
       }
+    } else {
+      // For other fields
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: files ? files[0] : value
-    }));
   };
 
   const handleSubmit = async (e) => {
