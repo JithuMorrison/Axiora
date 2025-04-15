@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
-import { FiSearch, FiRefreshCw, FiCalendar, FiUser, FiBook, FiFileText, FiChevronLeft, FiChevronRight, FiDownload } from 'react-icons/fi';
+import { FiSearch, FiRefreshCw, FiCalendar, FiUser, FiBook, FiFileText, FiChevronLeft, FiChevronRight, FiDownload, FiEdit, FiX, FiSave } from 'react-icons/fi';
 
 const MOUList = () => {
   const [sheetData, setSheetData] = useState([]);
@@ -11,6 +11,18 @@ const MOUList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [editingId, setEditingId] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    instituteName: '',
+    startDate: '',
+    endDate: '',
+    signedBy: '',
+    facultyDetails: '',
+    academicYear: '',
+    purpose: '',
+    outcomes: '',
+    fileName: ''
+  });
 
   useEffect(() => {
     fetchData();
@@ -20,8 +32,9 @@ const MOUList = () => {
     setLoading(true);
     try {
       const res = await axios.get('http://localhost:5000/sheet-data1');
-      // Transform the array of arrays into array of objects
-      const transformedData = res.data.values.map(row => ({
+      // Transform the array of arrays into array of objects with row index
+      const transformedData = res.data.values.map((row, index) => ({
+        rowIndex: index + 1, // Adding 1 because spreadsheet rows are 1-indexed
         instituteName: row[0] || '',
         startDate: row[1] || '',
         endDate: row[2] || '',
@@ -41,6 +54,48 @@ const MOUList = () => {
       toast.error('Error loading MOU data');
       console.error('Error fetching data:', error);
       setLoading(false);
+    }
+  };
+
+  const handleEditClick = (mou) => {
+    setEditingId(mou.rowIndex);
+    setEditFormData({
+      instituteName: mou.instituteName,
+      startDate: mou.startDate,
+      endDate: mou.endDate,
+      signedBy: mou.signedBy,
+      facultyDetails: mou.facultyDetails,
+      academicYear: mou.academicYear,
+      purpose: mou.purpose,
+      outcomes: mou.outcomes,
+      fileName: mou.fileName
+    });
+  };
+
+  const handleCancelClick = () => {
+    setEditingId(null);
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: value
+    });
+  };
+
+  const handleSaveClick = async () => {
+    try {
+      await axios.post('http://localhost:5000/update-mou', {
+        rowIndex: editingId-1,
+        updatedData: editFormData
+      });
+      toast.success('MOU updated successfully');
+      setEditingId(null);
+      fetchData(); // Refresh the data
+    } catch (error) {
+      toast.error('Error updating MOU');
+      console.error('Error updating MOU:', error);
     }
   };
 
@@ -73,8 +128,7 @@ const MOUList = () => {
       value =>
         value &&
         value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  ));
 
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -210,43 +264,110 @@ const MOUList = () => {
                       >
                         Created By
                       </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {currentItems.map((mou, index) => (
-                      <tr key={index} className="hover:bg-gray-50 transition-colors">
+                    {currentItems.map((mou) => (
+                      <tr key={mou.rowIndex} className="hover:bg-gray-50 transition-colors">
+                        {/* Institute Name */}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                              {mou.instituteName.charAt(0).toUpperCase()}
+                          {editingId === mou.rowIndex ? (
+                            <input
+                              type="text"
+                              name="instituteName"
+                              value={editFormData.instituteName}
+                              onChange={handleEditFormChange}
+                              className="w-full border border-gray-300 rounded-md px-2 py-1"
+                            />
+                          ) : (
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                                {mou.instituteName.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{mou.instituteName}</div>
+                                <div className="text-sm text-gray-500">{mou.academicYear}</div>
+                              </div>
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{mou.instituteName}</div>
-                              <div className="text-sm text-gray-500">{mou.academicYear}</div>
+                          )}
+                        </td>
+
+                        {/* Duration */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingId === mou.rowIndex ? (
+                            <div className="space-y-2">
+                              <input
+                                type="date"
+                                name="startDate"
+                                value={editFormData.startDate}
+                                onChange={handleEditFormChange}
+                                className="w-full border border-gray-300 rounded-md px-2 py-1"
+                              />
+                              <input
+                                type="date"
+                                name="endDate"
+                                value={editFormData.endDate}
+                                onChange={handleEditFormChange}
+                                className="w-full border border-gray-300 rounded-md px-2 py-1"
+                              />
                             </div>
-                          </div>
+                          ) : (
+                            <>
+                              <div className="text-sm text-gray-900">
+                                {mou.startDate && format(new Date(mou.startDate), 'MMM dd, yyyy')} -{' '}
+                                {mou.endDate && format(new Date(mou.endDate), 'MMM dd, yyyy')}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {mou.startDate && mou.endDate && (
+                                  <>
+                                    {Math.ceil(
+                                      (new Date(mou.endDate) - new Date(mou.startDate)) /
+                                        (1000 * 60 * 60 * 24)
+                                    )}{' '}
+                                    days
+                                  </>
+                                )}
+                              </div>
+                            </>
+                          )}
                         </td>
+
+                        {/* Signed By */}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {mou.startDate && format(new Date(mou.startDate), 'MMM dd, yyyy')} -{' '}
-                            {mou.endDate && format(new Date(mou.endDate), 'MMM dd, yyyy')}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {mou.startDate && mou.endDate && (
-                              <>
-                                {Math.ceil(
-                                  (new Date(mou.endDate) - new Date(mou.startDate)) /
-                                    (1000 * 60 * 60 * 24)
-                                )}{' '}
-                                days
-                              </>
-                            )}
-                          </div>
+                          {editingId === mou.rowIndex ? (
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                name="signedBy"
+                                value={editFormData.signedBy}
+                                onChange={handleEditFormChange}
+                                className="w-full border border-gray-300 rounded-md px-2 py-1"
+                                placeholder="Signed By"
+                              />
+                              <input
+                                type="text"
+                                name="facultyDetails"
+                                value={editFormData.facultyDetails}
+                                onChange={handleEditFormChange}
+                                className="w-full border border-gray-300 rounded-md px-2 py-1"
+                                placeholder="Faculty Details"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-sm text-gray-900">{mou.signedBy}</div>
+                              <div className="text-sm text-gray-500">{mou.facultyDetails}</div>
+                            </>
+                          )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{mou.signedBy}</div>
-                          <div className="text-sm text-gray-500">{mou.facultyDetails}</div>
-                        </td>
+
+                        {/* Agreement */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           {mou.agreementFileId ? (
                             <button
@@ -260,11 +381,43 @@ const MOUList = () => {
                             <span className="text-sm text-gray-500">No file</span>
                           )}
                         </td>
+
+                        {/* Created By */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{mou.createdBy}</div>
                           <div className="text-sm text-gray-500">
                             {mou.createdAt && format(new Date(mou.createdAt), 'MMM dd, yyyy HH:mm')}
                           </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {editingId === mou.rowIndex ? (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={handleSaveClick}
+                                className="text-green-600 hover:text-green-900"
+                                title="Save"
+                              >
+                                <FiSave className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={handleCancelClick}
+                                className="text-red-600 hover:text-red-900"
+                                title="Cancel"
+                              >
+                                <FiX className="h-5 w-5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleEditClick(mou)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Edit"
+                            >
+                              <FiEdit className="h-5 w-5" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

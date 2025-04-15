@@ -152,7 +152,152 @@ app.get('/get-pdf/:name', async (req, res) => {
       res.status(500).send('Error downloading file');
     }
   });
-  
+
+  // ✏️ Edit MOU Details
+app.post('/update-mou', async (req, res) => {
+  const { rowIndex, updatedData } = req.body;
+  const client = await auth.getClient();
+  const sheets = google.sheets({ version: 'v4', auth: client });
+
+  try {
+    // Convert the updatedData object to an array in the correct column order
+    const values = [
+      updatedData.instituteName,
+      updatedData.startDate,
+      updatedData.endDate,
+      updatedData.signedBy,
+      updatedData.facultyDetails,
+      updatedData.academicYear,
+      updatedData.purpose,
+      updatedData.outcomes,
+      updatedData.agreementFileId,
+      updatedData.fileName,
+      updatedData.createdBy,
+      updatedData.createdAt
+    ];
+
+    // The range needs to point to the specific row (A2, A3, etc.)
+    const range = `${SHEET_NAME}!A${rowIndex + 1}:L${rowIndex + 1}`;
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID1,
+      range: range,
+      valueInputOption: 'USER_ENTERED',
+      resource: { values: [values] },
+    });
+
+    res.send('MOU updated successfully');
+  } catch (error) {
+    console.error('Error updating MOU:', error);
+    res.status(500).send('Error updating MOU');
+  }
+});
+
+// ✏️ Edit User Details
+app.post('/update-user', async (req, res) => {
+  const { rowIndex, updatedData } = req.body;
+  const client = await auth.getClient();
+  const sheets = google.sheets({ version: 'v4', auth: client });
+
+  try {
+    // Convert the updatedData object to an array in the correct column order
+    const values = [
+      updatedData.name,
+      updatedData.email,
+      updatedData.role,
+      updatedData.department,
+      updatedData.status,
+      updatedData.lastLogin
+    ];
+
+    // The range needs to point to the specific row (A2, A3, etc.)
+    const range = `${SHEET_NAME}!A${rowIndex + 1}:F${rowIndex + 1}`;
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: range,
+      valueInputOption: 'USER_ENTERED',
+      resource: { values: [values] },
+    });
+
+    res.send('User updated successfully');
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).send('Error updating user');
+  }
+});
+
+// 🔍 Get MOU by row index
+app.get('/get-mou/:rowIndex', async (req, res) => {
+  const { rowIndex } = req.params;
+  const client = await auth.getClient();
+  const sheets = google.sheets({ version: 'v4', auth: client });
+
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID1,
+      range: `${SHEET_NAME}!A${rowIndex}:L${rowIndex}`,
+    });
+
+    if (!response.data.values || response.data.values.length === 0) {
+      return res.status(404).send('MOU not found');
+    }
+
+    const mouData = response.data.values[0];
+    const mouObject = {
+      instituteName: mouData[0] || '',
+      startDate: mouData[1] || '',
+      endDate: mouData[2] || '',
+      signedBy: mouData[3] || '',
+      facultyDetails: mouData[4] || '',
+      academicYear: mouData[5] || '',
+      purpose: mouData[6] || '',
+      outcomes: mouData[7] || '',
+      agreementFileId: mouData[8] || '',
+      fileName: mouData[9] || '',
+      createdBy: mouData[10] || '',
+      createdAt: mouData[11] || ''
+    };
+
+    res.json(mouObject);
+  } catch (error) {
+    console.error('Error fetching MOU:', error);
+    res.status(500).send('Error fetching MOU');
+  }
+});
+
+// 🔍 Get User by row index
+app.get('/get-user/:rowIndex', async (req, res) => {
+  const { rowIndex } = req.params;
+  const client = await auth.getClient();
+  const sheets = google.sheets({ version: 'v4', auth: client });
+
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A${rowIndex}:F${rowIndex}`,
+    });
+
+    if (!response.data.values || response.data.values.length === 0) {
+      return res.status(404).send('User not found');
+    }
+
+    const userData = response.data.values[0];
+    const userObject = {
+      name: userData[0] || '',
+      email: userData[1] || '',
+      role: userData[2] || '',
+      department: userData[3] || '',
+      status: userData[4] || '',
+      lastLogin: userData[5] || ''
+    };
+
+    res.json(userObject);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).send('Error fetching user');
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
