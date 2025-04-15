@@ -21,22 +21,13 @@ const MOUDownload = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/sheet-data1');
-        const transformedData = response.data.values.map(row => ({
-          instituteName: row[0] || '',
-          startDate: row[1] || '',
-          endDate: row[2] || '',
-          signedBy: row[3] || '',
-          facultyDetails: row[4] || '',
-          academicYear: row[5] || '',
-          purpose: row[6] || '',
-          outcomes: row[7] || '',
-          agreementFileId: row[8] || '',
-          fileName: row[9] || '',
-          createdBy: row[10] || '',
-          createdAt: row[11] || ''
-        }));
-        setAllMOU(transformedData);
+        const storedData = localStorage.getItem('moudetails');
+        if (storedData) {
+          const transformedData = JSON.parse(storedData);
+          setAllMOU(transformedData);
+        } else {
+          console.error('No MOU data found in localStorage');
+        }
       } catch (error) {
         toast.error('Failed to load MOU data');
         console.error('Error fetching data:', error);

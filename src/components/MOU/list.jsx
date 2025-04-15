@@ -31,24 +31,13 @@ const MOUList = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:5000/sheet-data1');
-      // Transform the array of arrays into array of objects with row index
-      const transformedData = res.data.values.map((row, index) => ({
-        rowIndex: index + 1, // Adding 1 because spreadsheet rows are 1-indexed
-        instituteName: row[0] || '',
-        startDate: row[1] || '',
-        endDate: row[2] || '',
-        signedBy: row[3] || '',
-        facultyDetails: row[4] || '',
-        academicYear: row[5] || '',
-        purpose: row[6] || '',
-        outcomes: row[7] || '',
-        agreementFileId: row[8] || '',
-        fileName: row[9] || '',
-        createdBy: row[10] || '',
-        createdAt: row[11] || ''
-      }));
-      setSheetData(transformedData);
+      const storedData = localStorage.getItem('moudetails');
+        if (storedData) {
+          const transformedData = JSON.parse(storedData);
+          setSheetData(transformedData);
+        } else {
+          console.error('No MOU data found in localStorage');
+        }
       setLoading(false);
     } catch (error) {
       toast.error('Error loading MOU data');

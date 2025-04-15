@@ -132,6 +132,25 @@ const MOUForm = ({ user }) => {
         values: values
       });
 
+      const newMOU = {
+        instituteName: formData.instituteName || '',
+        startDate: formData.startDate || '',
+        endDate: formData.endDate || '',
+        signedBy: formData.signedBy || '',
+        facultyDetails: formData.facultyDetails || '',
+        academicYear: formData.academicYear || '',
+        purpose: formData.purpose || '',
+        outcomes: formData.outcomes || '',
+        agreementFileId: fileId || 'No file uploaded',
+        fileName: formData.fileName || '',
+        createdBy: formData.createdBy || '',
+        createdAt: formData.createdAt || ''
+      };
+
+      const existingData = JSON.parse(localStorage.getItem('moudetails')) || [];
+      existingData.push(newMOU);
+      localStorage.setItem('moudetails', JSON.stringify(existingData));
+
       toast.success('MOU added successfully!');
       
       // Reset form
