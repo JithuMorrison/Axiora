@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FiDownload, FiFilter, FiCalendar, FiUser, FiBook, FiClock, FiX, FiCheck } from 'react-icons/fi';
+import { FiDownload, FiFilter, FiCalendar, FiUser, FiBook, FiClock, FiX, FiCheck, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 
 const MOUDownload = () => {
@@ -15,12 +15,13 @@ const MOUDownload = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [allMOU, setAllMOU] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get('http://localhost:5000/sheet-data1');
-        // Transform the array of arrays into array of objects
         const transformedData = response.data.values.map(row => ({
           instituteName: row[0] || '',
           startDate: row[1] || '',
@@ -50,6 +51,7 @@ const MOUDownload = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const filterMOU = () => {
@@ -68,8 +70,17 @@ const MOUDownload = () => {
     });
   };
 
+  const filteredData = filterMOU();
+  
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   const exportToExcel = (data, fileName) => {
-    // Prepare data for Excel export
     const excelData = data.map(mou => ({
       'Institute Name': mou.instituteName,
       'Start Date': mou.startDate,
@@ -92,7 +103,6 @@ const MOUDownload = () => {
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const filteredData = filterMOU();
       if (filteredData.length === 0) {
         toast.warning('No records match your filters');
         return;
@@ -224,7 +234,7 @@ const MOUDownload = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mb-8">
             <button
               onClick={handleResetFilters}
               className="px-5 py-3 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-200 flex items-center justify-center"
@@ -265,6 +275,129 @@ const MOUDownload = () => {
                 </>
               )}
             </button>
+          </div>
+
+          {/* Data Table */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              Filtered Results: {filteredData.length} records found
+            </h3>
+            
+            <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Institute
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Signed By
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Academic Year
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {currentItems.length > 0 ? (
+                    currentItems.map((mou, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{mou.instituteName}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">
+                            {mou.startDate} to {mou.endDate}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{mou.signedBy}</div>
+                          <div className="text-sm text-gray-500">{mou.facultyDetails}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-500">{mou.academicYear}</div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
+                        No records found matching your filters
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {filteredData.length > itemsPerPage && (
+              <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
+                      <span className="font-medium">
+                        {Math.min(indexOfLastItem, filteredData.length)}
+                      </span>{' '}
+                      of <span className="font-medium">{filteredData.length}</span> results
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <button
+                        onClick={() => paginate(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                      >
+                        <span className="sr-only">Previous</span>
+                        <FiChevronLeft className="h-5 w-5" />
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                        <button
+                          key={number}
+                          onClick={() => paginate(number)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === number
+                              ? 'z-10 bg-violet-50 border-violet-500 text-violet-600'
+                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          {number}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => paginate(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                      >
+                        <span className="sr-only">Next</span>
+                        <FiChevronRight className="h-5 w-5" />
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tips Section */}
