@@ -40,6 +40,9 @@ const Navbar = ({ user, setUser }) => {
               <Link to="/download-mou" className="hover:text-blue-600 transition">
                 Download
               </Link>
+              <Link  to="/profile"  className={'block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700'} >
+                My Profile
+              </Link>
               <button
                 onClick={handleLogout}
                 className="ml-4 px-4 py-1.5 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition"
@@ -93,6 +96,9 @@ const Navbar = ({ user, setUser }) => {
               </Link>
               <Link to="/download-mou" onClick={toggleMobileMenu} className="block hover:text-blue-600">
                 Download
+              </Link>
+              <Link  to="/profile"  className={`block px-4 py-2 text-sm ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`} >
+                My Profile
               </Link>
               <button
                 onClick={() => {

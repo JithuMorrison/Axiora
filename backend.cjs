@@ -227,6 +227,93 @@ app.post('/update-user', async (req, res) => {
   }
 });
 
+app.put('/api/users/update-info', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A1:Z1000`,
+    });
+
+    const users = response.data.values;
+    const userRowIndex = users.findIndex(row => row[1] === email); // Email in Column B
+
+    if (userRowIndex === -1) return res.status(404).json({ message: 'User not found' });
+
+    const userRow = users[userRowIndex];
+    userRow[0] = name || userRow[0]; // Update Name in Column A
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A${userRowIndex + 1}:Z${userRowIndex + 1}`,
+      valueInputOption: 'USER_ENTERED',
+      resource: { values: [userRow] },
+    });
+
+    res.json({ 
+      user: { 
+        name: userRow[0], 
+        email: userRow[1] 
+      }, 
+      message: 'Profile updated successfully' 
+    });
+  } catch (error) {
+    console.error('Update info error:', error);
+    res.status(500).json({ message: 'Failed to update profile' });
+  }
+});
+
+app.put('/api/users/update-password', async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A1:Z1000`,
+    });
+
+    const users = response.data.values;
+    const userRowIndex = users.findIndex(row => row[1] === email); // Email in Column B
+
+    if (userRowIndex === -1) return res.status(404).json({ message: 'User not found' });
+
+    const userRow = users[userRowIndex];
+    const storedPassword = userRow[2]; // Password in Column C
+
+    // Basic password validation (in production, use proper password hashing)
+    if (storedPassword !== currentPassword) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    userRow[2] = newPassword; // Update password in Column C
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A${userRowIndex + 1}:Z${userRowIndex + 1}`,
+      valueInputOption: 'USER_ENTERED',
+      resource: { values: [userRow] },
+    });
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Password update error:', error);
+    res.status(500).json({ message: 'Failed to update password' });
+  }
+});
+
 // 🔍 Get MOU by row index
 app.get('/get-mou/:rowIndex', async (req, res) => {
   const { rowIndex } = req.params;

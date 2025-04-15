@@ -15,6 +15,7 @@ import { getAllMOU } from './utils/excel';
 import SheetForm from './sheets';
 import PdfManager from './drive';
 import axios from 'axios';
+import Profile from './components/Auth/profile';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -72,6 +73,7 @@ const App = () => {
             <Route path="/add-mou" element={<MOUForm user={user} theme={theme} />} />
             <Route path="/view-mou" element={<MOUList theme={theme} />} />
             <Route path="/download-mou" element={<MOUDownload theme={theme} />} />
+            <Route path="/profile" element={<Profile user={user} setUser={setUser} theme={theme} />} />
           </Routes>
         </div>
         <Footer theme={theme} />
