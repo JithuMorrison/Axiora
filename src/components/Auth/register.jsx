@@ -45,7 +45,8 @@ const Register = ({ setUser }) => {
           userData.name,
           userData.email,
           userData.password,
-          new Date().toISOString() // Add registration timestamp
+          new Date().toISOString(), // Add registration timestamp
+          'user'
         ]
       });
     } catch (error) {
@@ -71,11 +72,30 @@ const Register = ({ setUser }) => {
       await addUserToSheet({
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        role: 'user'
       });
 
       setUser({ email: formData.email, name: formData.name });
       navigate('/dashboard');
+      if (!localStorage.getItem('moudetails')) {
+        const response = await axios.get('http://localhost:5000/sheet-data1');
+        const allMOU = response.data.values.map(row => ({
+          instituteName: row[0] || '',
+          startDate: row[1] || '',
+          endDate: row[2] || '',
+          signedBy: row[3] || '',
+          facultyDetails: row[4] || '',
+          academicYear: row[5] || '',
+          purpose: row[6] || '',
+          outcomes: row[7] || '',
+          agreementFileId: row[8] || '',
+          fileName: row[9] || '',
+          createdBy: row[10] || '',
+          createdAt: row[11] || ''
+        })).filter(mou => mou.createdBy === formData.email);
+        localStorage.setItem('moudetails',JSON.stringify(allMOU));
+      }
       toast.success('Registration successful!');
     } catch (error) {
       toast.error(error.message || 'Registration failed. Please try again.');

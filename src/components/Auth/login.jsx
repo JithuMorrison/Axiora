@@ -70,6 +70,25 @@ const Login = ({ setUser }) => {
       // Navigate to dashboard
       if(user.role == 'user'){
         navigate('/dashboard');
+        if (!localStorage.getItem('moudetails')) {
+          const response = await axios.get('http://localhost:5000/sheet-data1');
+          // Transform the array of arrays into array of objects
+          const allMOU = response.data.values.map(row => ({
+            instituteName: row[0] || '',
+            startDate: row[1] || '',
+            endDate: row[2] || '',
+            signedBy: row[3] || '',
+            facultyDetails: row[4] || '',
+            academicYear: row[5] || '',
+            purpose: row[6] || '',
+            outcomes: row[7] || '',
+            agreementFileId: row[8] || '',
+            fileName: row[9] || '',
+            createdBy: row[10] || '',
+            createdAt: row[11] || ''
+          })).filter(mou => mou.createdBy === user.email);
+          localStorage.setItem('moudetails',JSON.stringify(allMOU));
+        }
       }
       else{
         navigate('/admindash');
