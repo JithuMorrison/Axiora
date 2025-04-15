@@ -44,7 +44,7 @@ const MOUForm = ({ user }) => {
           if (!formData.fileName) {
             setFormData(prev => ({
               ...prev,
-              fileName: filename
+              fileName: filename+"-"+formData.startDate+".pdf"
             }));
           }
   
