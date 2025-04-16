@@ -14,6 +14,7 @@ import {
   FiBarChart2,
   FiDatabase
 } from 'react-icons/fi';
+import MOUChatBot from './gemini';
 
 const AdminDashboard = ({ children, theme }) => {
   const [stats, setStats] = useState({
@@ -492,6 +493,7 @@ const AdminDashboard = ({ children, theme }) => {
           )}
         </div>
       </div>
+      <MOUChatBot/>
     </div>
   );
 };

@@ -273,8 +273,8 @@ app.put('/api/users/update-info', async (req, res) => {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'your-email@gmail.com',  // Replace with your email
-    pass: 'your-email-password',   // Replace with your email password (use environment variables for better security)
+    user: process.env.EMAIL,  // Replace with your email
+    pass: process.env.PASS,   // Replace with your email password (use environment variables for better security)
   },
 });
 
@@ -283,7 +283,7 @@ app.post('/send-email', (req, res) => {
   const { to, subject, text } = req.body;
 
   const mailOptions = {
-    from: 'your-email@gmail.com',  // Replace with your email
+    from: process.env.EMAIL,  // Replace with your email
     to: to,
     subject: subject,
     text: text,
@@ -558,6 +558,14 @@ app.post('/api/mou/renew', async (req, res) => {
     console.error('Error renewing MOU:', error);
     res.status(500).json({ message: 'Failed to renew MOU' });
   }
+});
+
+app.get('/api/key', (req, res) => {
+  const key = process.env.GEMINI;
+  if (!key) {
+    return res.status(500).json({ error: 'API Key not found' });
+  }
+  res.json({ apiKey: key });
 });
 
 app.listen(PORT, () => {
