@@ -18,6 +18,8 @@ import axios from 'axios';
 import Profile from './components/Auth/profile';
 import EmailForm from './email';
 import AdminDashboard from './admindash';
+import SettingsPage from './settings';
+import ActivityLogPage from './activitylog';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -91,6 +93,8 @@ const App = () => {
             <Route path="/view-mou" element={<MOUList theme={theme} />} />
             <Route path="/download-mou" element={<MOUDownload theme={theme} />} />
             <Route path="/profile" element={<Profile user={user} setUser={setUser} theme={theme} />} />
+            <Route path="/admin/settings" element={<SettingsPage theme={theme} />} />
+            <Route path="/admin/activity-log" element={<ActivityLogPage theme={theme} />} />
           </Routes>
         </div>
         <Footer theme={theme} />

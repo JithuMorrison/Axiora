@@ -44,12 +44,13 @@ const AdminDashboard = ({ children, theme }) => {
         const currentDate = new Date();
 
         // Process MOU data from moudetails
-        const allMOU = mouDetails.map(row => ({
+        const allMOU = mouDetails.map((row,index) => ({
             instituteName: row.instituteName || '',
             startDate: row.startDate || '',
             endDate: row.endDate || '',
             signedBy: row.signedBy || '',
-            status: differenceInMonths(row.endDate, currentDate) <= 0 ? 'active' : 'deactive'
+            status: differenceInMonths(row.endDate, currentDate) <= 0 ? 'active' : 'deactive',
+            ind : index
         }));
 
         const expiring = allMOU.filter(mou => {
@@ -99,24 +100,48 @@ const AdminDashboard = ({ children, theme }) => {
 
   const handleRenewMOU = async (mouId) => {
     try {
-      await axios.post('http://localhost:5000/renew-mou', { id: mouId });
+      await axios.post('http://localhost:5000/api/mou/renew', { id: mouId });
       toast.success("MOU renewal process started");
-      // Refresh data
-      const response = await axios.get('http://localhost:5000/sheet-data1');
-      const allMOU = response.data.values.map(row => ({
-        instituteName: row[0] || '',
-        endDate: row[2] || '',
-        status: row[4] || 'active'
-      }));
-      setExpiringMOU(allMOU.filter(mou => {
-        if (!mou.endDate) return false;
-        const endDate = parseISO(mou.endDate);
-        return differenceInMonths(endDate, new Date()) <= 1;
-      }));
+  
+      // Get localStorage data using 'moudetails'
+      const storedData = JSON.parse(localStorage.getItem('moudetails')) || [];
+  
+      // Update matching MOU
+      const updatedData = storedData.map((mou,index) =>
+        index === mouId-1
+          ? {
+              ...mou,
+              endDate: getExtendedEndDate(mou.endDate),
+            }
+          : mou
+      );
+      alert(mouId);
+      console.log(storedData);
+      console.log(updatedData);
+  
+      // Save updated data back to localStorage
+      localStorage.setItem('moudetails', JSON.stringify(updatedData));
+      setExpiringMOU(
+        updatedData
+          .map((mou, index) => ({ ...mou, index }))
+          .filter(mou => {
+            if (!mou.endDate) return false;
+            const endDate = parseISO(mou.endDate);
+            return differenceInMonths(endDate, new Date()) <= 1;
+          })
+      );
+  
     } catch (error) {
-      toast.error("Failed to initiate renewal");
+      toast.error("Failed to initiate renewal"+error);
     }
   };
+  
+  // Helper function to extend endDate by 1 year
+  const getExtendedEndDate = (dateStr) => {
+    const date = parseISO(dateStr);
+    const newDate = new Date(date.setMonth(date.getMonth() + 1));
+    return newDate.toISOString(); // YYYY-MM-DD format
+  };  
 
   return (
     <div className="space-y-8">
@@ -343,7 +368,7 @@ const AdminDashboard = ({ children, theme }) => {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleRenewMOU(index)}
+                      onClick={() => handleRenewMOU(mou.ind+1)}
                       className={`px-3 py-1 rounded-md text-sm font-medium ${
                         theme === 'dark' 
                           ? 'bg-yellow-600 hover:bg-yellow-700 text-white' 

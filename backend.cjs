@@ -414,6 +414,152 @@ app.get('/get-user/:rowIndex', async (req, res) => {
   }
 });
 
+// Settings Endpoints
+app.get('/api/settings', async (req, res) => {
+  try {
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: "'Settings'!A1:B10",
+    });
+
+    const settings = {};
+    response.data.values.forEach(row => {
+      settings[row[0]] = row[1] === 'TRUE' ? true : row[1] === 'FALSE' ? false : row[1];
+    });
+
+    res.json({
+      autoRenew: settings.autoRenew || false,
+      renewalThreshold: settings.renewalThreshold || 1,
+      notificationDays: settings.notificationDays || 7,
+      emailNotifications: settings.emailNotifications !== false
+    });
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ message: 'Failed to load settings' });
+  }
+});
+
+app.put('/api/settings', async (req, res) => {
+  try {
+    const { autoRenew, renewalThreshold, notificationDays, emailNotifications } = req.body;
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: "'Settings'!A1:B10",
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: [
+          ['autoRenew', autoRenew],
+          ['renewalThreshold', renewalThreshold],
+          ['notificationDays', notificationDays],
+          ['emailNotifications', emailNotifications]
+        ]
+      }
+    });
+
+    res.json({ message: 'Settings updated successfully' });
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ message: 'Failed to update settings' });
+  }
+});
+
+// Activity Log Endpoints
+app.get('/api/activity', async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: "'ActivityLog'!A1:E1000",
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      console.log('No activity log data found.');
+      return res.status(200).json([]);
+    }
+
+    const activities = rows.slice(1).map(row => ({
+      id: row[0],
+      type: row[1],
+      action: row[2],
+      details: row[3],
+      user: row[4],
+      timestamp: row[5],
+      mouId: row[6]
+    }));
+
+    // Pagination
+    const startIndex = (page - 1) * limit;
+    const paginatedActivities = activities.slice(startIndex, startIndex + limit);
+
+    res.json(paginatedActivities);
+  } catch (error) {
+    console.error('Error fetching activity log:', error);
+    res.status(500).json({ message: 'Failed to load activity log' });
+  }
+});
+
+// MOU Renewal Endpoint
+app.post('/api/mou/renew', async (req, res) => {
+  try {
+    const { id } = req.body;
+    const client = await auth.getClient();
+    const sheets = google.sheets({ version: 'v4', auth: client });
+
+    // Get the MOU data
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID1,
+      range: `${SHEET_NAME}!A${id}:L${id}`,
+    });
+
+    const mouData = response.data.values[0];
+    const endDate = new Date(mouData[2]);
+    endDate.setMonth(endDate.getMonth() + 1); // Add 1 month
+
+    // Update the end date
+    mouData[2] = endDate.toISOString().split('T')[0];
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID1,
+      range: `${SHEET_NAME}!A${id}:L${id}`,
+      valueInputOption: 'USER_ENTERED',
+      resource: { values: [mouData] }
+    });
+
+    // Log the activity
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: "'ActivityLog'!A1",
+      valueInputOption: 'USER_ENTERED',
+      resource: {
+        values: [[
+          Date.now().toString(),
+          'renew',
+          'MOU Renewed',
+          `Extended MOU ${mouData[0]} by 1 month`,
+          'Admin',
+          new Date().toISOString(),
+          id
+        ]]
+      }
+    });
+
+    res.json({ message: 'MOU renewed successfully' });
+  } catch (error) {
+    console.error('Error renewing MOU:', error);
+    res.status(500).json({ message: 'Failed to renew MOU' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
