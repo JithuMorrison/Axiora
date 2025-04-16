@@ -16,6 +16,7 @@ import SheetForm from './sheets';
 import PdfManager from './drive';
 import axios from 'axios';
 import Profile from './components/Auth/profile';
+import EmailForm from './email';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -432,6 +433,7 @@ const Dashboard = ({ children, theme }) => {
           </div>
         )}
       </div>
+      <EmailForm/>
     </div>
   );
 };

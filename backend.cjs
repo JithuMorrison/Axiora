@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const multer = require('multer');
 const fs = require('fs');
 const keys = require('./cred.json'); // Service account JSON
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = 5000;
@@ -267,6 +268,33 @@ app.put('/api/users/update-info', async (req, res) => {
     console.error('Update info error:', error);
     res.status(500).json({ message: 'Failed to update profile' });
   }
+});
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'your-email@gmail.com',  // Replace with your email
+    pass: 'your-email-password',   // Replace with your email password (use environment variables for better security)
+  },
+});
+
+// API route to send email
+app.post('/send-email', (req, res) => {
+  const { to, subject, text } = req.body;
+
+  const mailOptions = {
+    from: 'your-email@gmail.com',  // Replace with your email
+    to: to,
+    subject: subject,
+    text: text,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return res.status(500).json({ message: 'Failed to send email', error });
+    }
+    return res.status(200).json({ message: 'Email sent successfully', info });
+  });
 });
 
 app.put('/api/users/update-password', async (req, res) => {
